@@ -22,10 +22,6 @@ if (!component) {
 const NODE_ENV = process.env.NODE_ENV;
 const isProduction = (NODE_ENV === 'production');
 
-console.log(
-    isProduction
-)
-
 // --- Filename
 const filename = process.env.npm_config_filename || 'main';
 const entry = path.resolve(__dirname, `${component}/${filename}.js`);
@@ -68,7 +64,16 @@ const config = {
             {
                 test: /\.vue$/,
                 use: {
-                    loader: 'vue-loader'
+                    loader: 'vue-loader',
+                    options: {
+                        postcss: [
+                            require('postcss-cssnext')(),
+                            require('postcss-nested')(),
+                            require('postcss-simple-vars'),
+                            require('postcss-mixins')
+                        ],
+                        autoprefixer: { browsers: ['last 2 versions'] }
+                    }
                 }
             },
             {
