@@ -1,13 +1,17 @@
 <template>
     <keep-alive>
-        <div class="bp-dropdown">
+        <div class="bp-dropdown" :class="customClass">
             <button @click="_onToggle"
                     :class="{ 'bp-dropdown__btn--active': !isHidden }"
                     class="bp-dropdown__btn">
                 <slot name="btn-text">
                     <span class="bp-dropdown__btn-text">Text</span>
                 </slot>
-                <svg v-if="arrowBtn" class="bp-dropdown__icon" viewBox="0 0 256 512">
+                <svg
+                        v-if="isArrow"
+                        :class="{ 'bp-dropdown__icon--top': arrowTop, 'bp-dropdown__icon--right': arrowRight, 'bp-dropdown__icon--bottom': arrowBottom, 'bp-dropdown__icon--left': arrowLeft }"
+                        class="bp-dropdown__icon"
+                        viewBox="0 0 256 512">
                     <path fill="currentColor" d="M119.5 326.9L3.5 209.1c-4.7-4.7-4.7-12.3 0-17l7.1-7.1c4.7-4.7 12.3-4.7 17 0L128 287.3l100.4-102.2c4.7-4.7 12.3-4.7 17 0l7.1 7.1c4.7 4.7 4.7 12.3 0 17L136.5 327c-4.7 4.6-12.3 4.6-17-.1z"></path>
                 </svg>
             </button>
@@ -34,17 +38,23 @@
                 default: resolve => resolve()
             },
 
-            arrowBtn: {
+            isArrow: {
                 type: Boolean,
                 required: false,
                 default: true
             },
 
-            arrowSublist: {
-                type: Boolean,
+            arrowDirection: {
+                type: String,
                 required: false,
-                default: true
-            }
+                default: 'bottom'
+            },
+
+            customClass: {
+                type: String,
+                required: false,
+                default: ''
+            },
         },
 
         data() {
@@ -55,6 +65,13 @@
                 positionTop: undefined,
                 positionLeft: undefined
             }
+        },
+
+        computed: {
+            arrowTop() { return this.arrowDirection === 'top' },
+            arrowRight() { return this.arrowDirection === 'right' },
+            arrowBottom() { return this.arrowDirection === 'bottom' },
+            arrowLeft() { return this.arrowDirection === 'left' }
         },
 
         created() {
@@ -116,25 +133,28 @@
                 const button = this.$el.firstElementChild;
                 const container = document.getElementById(this.generatedId);
 
-                const windowWidth = window.innerWidth;
-                const windowHeight = window.innerHeight;
+                const windowWidth = innerWidth;
+                const windowHeight = innerHeight;
 
-                let coords = this.getCoords(button);
+                let coords = this.getBoundingCoords(button);
 
                 let bodyWidth = container.offsetWidth;
                 let bodyHeight = container.offsetHeight;
 
+                let currentTop = coords.top + button.offsetHeight;
+                let currentLeft = coords.left;
+
                 this.positionTop =
                     // --- if behind bottom
-                    ((coords.top + bodyHeight) >= windowHeight) ?
-                        (coords.top - button.offsetHeight) :
-                        (coords.top + button.offsetHeight);
+                    ((currentTop + bodyHeight) >= windowHeight) ?
+                        (currentTop + pageYOffset - button.offsetHeight - bodyHeight) :
+                        (currentTop + pageYOffset);
 
                 this.positionLeft =
                     // --- if behind left
-                    ((coords.left + bodyWidth) >= windowWidth) ?
-                        (coords.left - bodyWidth + button.offsetWidth) :
-                        coords.left;
+                    ((currentLeft + bodyWidth) >= windowWidth) ?
+                        (currentLeft + pageXOffset - bodyWidth + button.offsetWidth) :
+                        (currentLeft + pageXOffset);
 
                 // --- if already in body
                 if (!this.isAppended) {
@@ -145,13 +165,13 @@
                 this.isAppended = true;
             },
 
-            // --- get element coordinates
-            getCoords(element) {
+            // --- get element coordinates of Window
+            getBoundingCoords(element) {
                 element = element.getBoundingClientRect();
 
                 return {
-                    top: parseInt(element.top + pageYOffset, 10),
-                    left: parseInt(element.left + pageXOffset, 10)
+                    top: element.top,
+                    left: element.left
                 };
             }
         }
@@ -204,6 +224,22 @@
 
                 & .bp-dropdown__icon {
                     transform: rotate(-180deg);
+
+                    &--top {
+                        transform: rotate(-180deg);
+                    }
+
+                    &--top {
+                        transform: rotate(0);
+                    }
+
+                    &--left {
+                        transform: rotate(-90deg);
+                    }
+
+                    &--right {
+                        transform: rotate(90deg);
+                    }
                 }
             }
         }
@@ -214,6 +250,22 @@
             height: var(--iconSize);
             overflow: visible;
             transition: transform .1s ease;
+
+            &--bottom {
+                transform: rotate(0);
+            }
+
+            &--top {
+                transform: rotate(-180deg);
+            },
+
+            &--left {
+                transform: rotate(90deg);
+            }
+
+            &--right {
+                transform: rotate(-90deg);
+            }
         }
 
         &__body {
