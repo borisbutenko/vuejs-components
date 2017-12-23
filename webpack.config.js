@@ -10,29 +10,31 @@ const OptimizeCSSPlugin = require('optimize-css-assets-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
 
 // --- Environment
-const component = process.env.npm_config_component;
-
-if (!component) {
-    throw Error(`
-        Bad command.
-        Component name is missing. Try: component=folder_name
-     `);
-}
-
 const NODE_ENV = process.env.NODE_ENV;
 const isProduction = (NODE_ENV === 'production');
 
 // --- Filename
 const filename = process.env.npm_config_filename || 'main';
-const entry = path.resolve(__dirname, `${component}/${filename}.js`);
+const entry = path.resolve(__dirname, `source/${filename}.js`);
 
 // --- Paths
-const basePath = path.resolve(__dirname, component);
+const basePath = path.resolve(__dirname, 'source');
 const devPath = `${basePath}\\dev`;
-const buildPath =`${basePath}\\src`;
+const buildPath =`${basePath}\\build`;
+
+// --- Postcss config
+const postcssConfig = {
+    plugins: [
+        require('precss')(),
+        require('postcss-cssnext')(),
+        // require('postcss-autoreset')(),
+        // require('postcss-initial')(),
+        require('postcss-flexbugs-fixes')()
+    ]
+};
 
 // --- Base Webpack configuration
-const config = {
+const webpackConfig = {
     entry: entry,
 
     output: {
@@ -49,30 +51,12 @@ const config = {
     module: {
         rules: [
             {
-                test: /\.css$/,
-                use: [
-                    'style-loader',
-                    {
-                        loader: 'css-loader',
-                        options: {
-                            importLoaders: 1
-                        }
-                    },
-                    'postcss-loader'
-                ]
-            },
-            {
                 test: /\.vue$/,
                 use: {
                     loader: 'vue-loader',
                     options: {
-                        postcss: [
-                            require('postcss-cssnext')(),
-                            require('postcss-nested')(),
-                            require('postcss-simple-vars'),
-                            require('postcss-mixins')
-                        ],
-                        autoprefixer: { browsers: ['last 2 versions'] }
+                        autoprefixer: false,
+                        postcss: postcssConfig
                     }
                 }
             },
@@ -109,7 +93,7 @@ const config = {
 
 // --- Production plugins
 if (isProduction) {
-    config.plugins.push(
+    webpackConfig.plugins.push(
         new webpack.optimize.ModuleConcatenationPlugin(),
         new UglifyJSPlugin({ parallel: true }),
         new OptimizeCSSPlugin({ cssProcessorOptions: { safe: true } }),
@@ -123,4 +107,4 @@ if (isProduction) {
     )
 }
 
-module.exports = config;
+module.exports = webpackConfig;

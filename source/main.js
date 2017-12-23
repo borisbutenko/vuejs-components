@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import Dropdown from './dev/vue/Dropdown';
+import Dropdown from './dropdown/Dropdown';
 
 new Vue({
     el: '#vuejs-app',
