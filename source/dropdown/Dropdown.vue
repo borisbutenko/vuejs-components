@@ -2,6 +2,8 @@
     <keep-alive>
         <div class="bp-dropdown" :class="customClass">
             <button @click="_onToggle"
+                    @mouseenter="_onMouseenter"
+                    @mouseleave="_onMouseleave"
                     :class="{ 'bp-dropdown__btn--active': !isHidden }"
                     class="bp-dropdown__btn">
                 <slot name="btn-text">
@@ -17,6 +19,8 @@
             </button>
             <transition name="fade">
                 <div v-if="!isHidden"
+                     @click="_onBodyClick"
+                     @mouseleave="_onMouseleave"
                      :id="generatedId"
                      :style="{ top: `${positionTop}px`, left: `${positionLeft}px` }"
                      class="bp-dropdown__body">
@@ -38,16 +42,34 @@
                 default: resolve => resolve()
             },
 
+            trigger: {
+                type: String,
+                required: false,
+                default: 'click'
+            },
+
+            closeOnClick: {
+                type: Boolean,
+                required: false,
+                default: false
+            },
+
             isArrow: {
                 type: Boolean,
                 required: false,
                 default: true
             },
 
-            arrowDirection: {
+            arrow: {
                 type: String,
                 required: false,
                 default: 'bottom'
+            },
+
+            direction: {
+                type: String,
+                required: false,
+                default: 'bottom' // top right bottom left
             },
 
             customClass: {
@@ -68,10 +90,10 @@
         },
 
         computed: {
-            arrowTop() { return this.arrowDirection === 'top' },
-            arrowRight() { return this.arrowDirection === 'right' },
-            arrowBottom() { return this.arrowDirection === 'bottom' },
-            arrowLeft() { return this.arrowDirection === 'left' }
+            arrowTop() { return this.arrow === 'top' },
+            arrowRight() { return this.arrow === 'right' },
+            arrowBottom() { return this.arrow === 'bottom' },
+            arrowLeft() { return this.arrow === 'left' }
         },
 
         created() {
@@ -81,7 +103,7 @@
             $root.$on('bq-dropdown:toggle', () => this.isHidden = true);
 
             // --- hide dropdown on document click event
-            if (!$root.bqDropdown) {
+            if (this.trigger === 'click' && !$root.bqDropdown) {
                 $root.bqDropdown = true;
 
                 document.onclick = (e) => {
@@ -105,11 +127,50 @@
                 this.generatedId = `bq-dropdown-${Math.random().toString(36).substr(2, 10)}`;
             },
 
-            _onToggle(e) {
-                if (this.isHidden) {
-                    // --- reposition for window resize
-                    this.isPosition = false;
+            _onToggle() {
+                if (this.trigger !== 'click') {
+                    return;
+                }
 
+                this.checkCustomCallback();
+                this.prepare();
+            },
+
+            _onMouseenter() {
+                if (this.trigger !== 'hover' || !this.isHidden) {
+                    return;
+                }
+
+                this.checkCustomCallback();
+                this.prepare();
+            },
+
+            _onMouseleave(e) {
+                if (this.trigger !== 'hover') {
+                    return;
+                }
+
+                let toElement = e.toElement;
+                let isDropdown =
+                    toElement.closest &&
+                    toElement.closest('.bp-dropdown__btn') ||
+                    toElement.closest('.bp-dropdown__body');
+
+                if (isDropdown) {
+                    return;
+                }
+
+                this.prepare();
+            },
+
+            _onBodyClick() {
+                if (this.closeOnClick) {
+                    this.isHidden = true;
+                }
+            },
+
+            checkCustomCallback() {
+                if (this.isHidden) {
                     // --- custom callback before open
                     new Promise(this.beforeOpen)
                         .then(() => {
@@ -118,7 +179,9 @@
                         })
                         .catch(() => { throw Error('bq-dropdown promise error') });
                 }
+            },
 
+            prepare() {
                 // --- because we're have promise
                 setTimeout(() => {
                     this.isHidden = !this.isHidden;
