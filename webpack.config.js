@@ -10,7 +10,7 @@ const OptimizeCSSPlugin = require('optimize-css-assets-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
 
 // --- Environment
-const NODE_ENV = process.env.NODE_ENV;
+const NODE_ENV = process.env.NODE_ENV; // fuck windows 'production'
 const isProduction = (NODE_ENV === 'production');
 
 // --- Filename

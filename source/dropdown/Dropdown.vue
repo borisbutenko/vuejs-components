@@ -67,7 +67,7 @@
             if (!$root.bqDropdown) {
                 $root.bqDropdown = true;
 
-                document.addEventListener('click', (e) => {
+                document.onclick = (e) => {
                     let target = e.target;
                     let dropdown = target.closest('.bp-dropdown__btn') || target.closest('.bp-dropdown__body');
 
@@ -76,7 +76,7 @@
                     }
 
                     this.$root.$emit('bq-dropdown:toggle');
-                }, false);
+                }
             }
 
             this.generateRandomId();

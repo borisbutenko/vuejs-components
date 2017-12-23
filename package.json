@@ -5,7 +5,7 @@
   "main": "webpack.config.js",
   "scripts": {
     "dev": "webpack --progress --colors --watch",
-    "build": "NODE_ENV=production webpack --progress --colors",
+    "build": "webpack --progress --colors",
     "test": "NODE_ENV=production browserify -g envify -e ./$component/main.js | uglifyjs -c -m > ./$component/src/build.js"
   },
   "repository": {
